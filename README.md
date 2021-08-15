@@ -1,12 +1,12 @@
 # `enriched`
 
-##### Annotation enrichment analysis software in modern C++
+### Annotation enrichment analysis software in modern C++
 
-This is a personal project that provides a software that address the following problems. We know symbols S_i each are assiciated with annotations A_i, given a test set of symbols and a background set, what annotations are over and under represented? Another version of this problem also includes number N_i associated with S_i, or statistics Theta_i associated with S_i.
+This is a personal project that provides a software that addresses the following problem: We know symbols S_i each are assiciated with annotations A_i, given a test set of symbols and a background set, what annotations are over and under represented? Another version of this problem also includes number N_i associated with S_i, or statistics Theta_i associated with S_i.
 
-##### Practice in modern C++
+### Practice in modern C++
 
-This project should utilizes all these [good stuff](https://raw.githubusercontent.com/CppCon/CppCon2019/master/Presentations/back_to_basics_the_best_parts_of_cpp/back_to_basics_the_best_parts_of_cpp__jason_turner__cppcon_2019.pdf) in modern C++.
+This project should utilize all these [good stuff](https://raw.githubusercontent.com/CppCon/CppCon2019/master/Presentations/back_to_basics_the_best_parts_of_cpp/back_to_basics_the_best_parts_of_cpp__jason_turner__cppcon_2019.pdf) in modern C++.
 
 1. const
 2. Deterministic Object Lifetime and Destruction
