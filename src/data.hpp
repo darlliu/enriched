@@ -20,30 +20,32 @@ struct _symbol {
 };
 
 template <typename dtype, size_t BITSIZE> struct _datum {
-  const std::shared_ptr<dtype> data;
+  const dtype data;
   std::bitset<BITSIZE> mappings;
+  _datum(const dtype &d, const std::bitset<BITSIZE> &m)
+      : data(d), mappings(m){};
+  _datum(const dtype &&d, const std::bitset<BITSIZE> &&m)
+      : data(std::move(d)), mappings(std::move(m)){};
 };
 
-typedef _datum<_annotation, 8> annotation8;
-typedef _datum<_annotation, 16> annotation16;
-typedef _datum<_annotation, 20> annotation20;
-typedef _datum<_annotation, 24> annotation24;
-typedef _datum<_annotation, 28> annotation28;
-typedef _datum<_annotation, 32> annotation32;
-typedef _datum<_symbol, 8> symbol8;
-typedef _datum<_symbol, 16> symbol16;
-typedef _datum<_symbol, 20> symbol20;
-typedef _datum<_symbol, 24> symbol24;
-typedef _datum<_symbol, 28> symbol28;
-typedef _datum<_symbol, 32> symbol32;
+typedef _datum<_annotation, 2 << 8> annotation8;
+typedef _datum<_annotation, 2 << 16> annotation16;
+typedef _datum<_annotation, 2 << 20> annotation20;
+typedef _datum<_annotation, 2 << 24> annotation24;
+typedef _datum<_annotation, 2 << 28> annotation28;
+typedef _datum<_symbol, 2 << 8> symbol8;
+typedef _datum<_symbol, 2 << 16> symbol16;
+typedef _datum<_symbol, 2 << 20> symbol20;
+typedef _datum<_symbol, 2 << 24> symbol24;
+typedef _datum<_symbol, 2 << 28> symbol28;
 
 // dataset class is a total annotated dataset consisting of
 // symbols and their associated annotations
 // it provides simple method such as decoding symbols, finding associations etc
 template <typename stype, typename atype> class Dataset {
 private:
-  std::vector<stype> syms;
-  std::vector<atype> annos;
+  std::vector<std::unique_ptr<stype>> syms;
+  std::vector<std::unique_ptr<atype>> annos;
   std::unordered_map<std::string, unsigned> _seen_annos, _seen_syms;
 
 public:
@@ -53,31 +55,31 @@ public:
   constexpr const unsigned sym_idx(const std::string &sym) {
     return _seen_syms.at(sym);
   };
-  constexpr const atype &get_anno(const unsigned &idx) const {
+  constexpr const atype *get_anno(const unsigned &idx) const {
     if (annos.size() > idx) {
-      return annos[idx];
+      return annos[idx].get();
     } else {
       throw(new std::invalid_argument("invalid index"));
     }
   };
-  constexpr const stype &get_sym(const unsigned &idx) const {
+  constexpr const stype *get_sym(const unsigned &idx) const {
     if (syms.size() > idx) {
-      return syms[idx];
+      return syms[idx].get();
     } else {
       throw(new std::invalid_argument("invalid index"));
     }
   };
-  constexpr const atype &get_anno(const std::string &anno) const {
+  constexpr const atype *get_anno(const std::string &anno) const {
     if (_seen_annos.count(anno)) {
-      return annos[_seen_annos.at(anno)];
+      return annos[_seen_annos.at(anno)].get();
     } else {
       throw(
           new std::invalid_argument("cannot get invalid annotation: " + anno));
     }
   };
-  constexpr const stype &get_sym(const std::string &sym) const {
+  constexpr const stype *get_sym(const std::string &sym) const {
     if (_seen_syms.count(sym)) {
-      return syms[_seen_syms.at(sym)];
+      return syms[_seen_syms.at(sym)].get();
     } else {
       throw(new std::invalid_argument("cannot get invalid symbol: " + sym));
     }
@@ -88,24 +90,24 @@ public:
   constexpr const bool has_sym(const std::string &sym) {
     return _seen_syms.count(sym);
   };
-  const std::vector<atype *>
+  const std::vector<const atype *>
   decode_annos(const decltype(stype::mappings) &encoding) {
-    std::vector<atype *> out;
+    std::vector<const atype *> out;
     out.reserve(encoding.size());
     for (unsigned i = 0; i < encoding.size(); ++i) {
       if (encoding.test(i)) {
-        out.push_back(&annos[i]);
+        out.push_back(get_anno(i));
       }
     }
     return out;
   };
-  const std::vector<stype *>
+  const std::vector<const stype *>
   decode_syms(const decltype(atype::mappings) &encoding) {
-    std::vector<stype *> out;
+    std::vector<const stype *> out;
     out.reserve(encoding.size());
     for (unsigned i = 0; i < encoding.size(); ++i) {
       if (encoding.test(i)) {
-        out.push_back(&syms[i]);
+        out.push_back(get_sym(i));
       }
     }
     return out;
@@ -123,8 +125,8 @@ public:
         mappings.set(anno_idx(anno));
       }
     }
-    syms.push_back(
-        stype{std::make_shared<_symbol>(_symbol{sym, name}), mappings});
+    _symbol data = {sym, name};
+    syms.push_back(std::make_unique<stype>(data, mappings));
     return;
   };
   void add_sym(const std::string &&sym, const std::string &&name,
@@ -140,9 +142,9 @@ public:
         mappings.set(anno_idx(anno));
       }
     }
-    syms.push_back(stype{
-        std::make_shared<_symbol>(_symbol{std::move(sym), std::move(name)}),
-        mappings});
+    _symbol data = {std::move(sym), std::move(name)};
+    syms.push_back(
+        std::make_unique<stype>(std::move(data), std::move(mappings)));
     return;
   };
   void add_anno(const std::string &id, const std::string &name,
@@ -159,8 +161,8 @@ public:
         mappings.set(sym_idx(sym));
       }
     }
-    annos.push_back(atype{
-        std::make_shared<_annotation>(_annotation{id, name, desc}), mappings});
+    _annotation data = {id, name, desc};
+    annos.push_back(std::make_unique<atype>(data, mappings));
     return;
   };
   void add_anno(const std::string &&id, const std::string &&name,
@@ -177,9 +179,9 @@ public:
         mappings.set(sym_idx(sym));
       }
     }
-    annos.push_back(atype{std::make_shared<_annotation>(_annotation{
-                              std::move(id), std::move(name), std::move(desc)}),
-                          mappings});
+    _annotation data = {std::move(id), std::move(name), std::move(desc)};
+    annos.push_back(
+        std::make_unique<atype>(std::move(data), std::move(mappings)));
     return;
   };
   void gen_mappings() {
@@ -188,22 +190,22 @@ public:
     }
     decltype(stype::mappings) bitmask_sym;
     for (const auto &sym : syms) {
-      bitmask_sym |= sym.mappings;
+      bitmask_sym |= sym->mappings;
     }
     decltype(atype::mappings) bitmask_anno;
     for (const auto &anno : annos) {
-      bitmask_anno |= anno.mappings;
+      bitmask_anno |= anno->mappings;
     }
     if (bitmask_sym.none()) {
       for (const auto &anno : annos) {
         for (int i = 0; i < syms.size(); ++i) {
-          syms[i].mappings[anno_idx(anno.data->id)] = anno.mappings[i];
+          syms[i]->mappings[anno_idx(anno->data.id)] = anno->mappings[i];
         }
       }
     } else if (bitmask_anno.none()) {
       for (const auto &sym : syms) {
         for (int i = 0; i < annos.size(); ++i) {
-          annos[i].mappings[sym_idx(sym.data->sym)] = sym.mappings[i];
+          annos[i]->mappings[sym_idx(sym->data.sym)] = sym->mappings[i];
         }
       }
     }
@@ -242,11 +244,11 @@ public:
     idxs.reserve(data.size());
     source = &src;
   };
-  virtual const std::vector<dtype> get() const = 0;
+  virtual const std::vector<const dtype *> get() const = 0;
   const decltype(dtype::mappings) get_mapped_mask() const {
     decltype(dtype::mappings) out = 0;
     for (const auto &dt : get()) {
-      out |= dt.mappings;
+      out |= dt->mappings;
     }
     return out;
   };
@@ -263,9 +265,8 @@ public:
       }
     }
   };
-
-  const std::vector<stype> get() const {
-    std::vector<stype> out;
+  const std::vector<const stype *> get() const {
+    std::vector<const stype *> out;
     out.reserve(this->idxs.size());
     for (unsigned idx : this->idxs) {
       out.push_back(this->source->get_sym(idx));
@@ -293,15 +294,13 @@ public:
       }
     }
   };
-
-  const std::vector<atype> get() const{
-    std::vector<atype> out;
+  const std::vector<const atype *> get() const {
+    std::vector<const atype *> out;
     for (const auto &idx : this->idxs) {
       out.push_back(this->source->get_anno(idx));
     }
     return out;
   };
-
   const decltype(stype::mappings) get_mask() const {
     decltype(stype::mappings) out = 0;
     for (auto &idx : this->idxs) {

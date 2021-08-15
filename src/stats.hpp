@@ -42,8 +42,8 @@ ab_test(const S &test_set, const S &control_set, const D &dataset,
     if (!hot_mask.test(i))
       continue;
     // 3, build contingency table
-    auto anno = dataset.get_anno(i);
-    auto total_mask = anno.mappings;
+    const auto anno = dataset.get_anno(i);
+    auto total_mask = anno -> mappings;
     decltype(total_mask) test_mask = test_set.get_mask(),
                          control_mask = control_set.get_mask();
     unsigned total_test = test_mask.count(),
@@ -54,7 +54,7 @@ ab_test(const S &test_set, const S &control_set, const D &dataset,
     double stat = fn(test_mask.count(), control_mask.count(),
                      total_test - test_mask.count(),
                      total_control - control_mask.count());
-	out.push_back({ anno.data->name , stat});
+    out.push_back({anno->data.name, stat});
   }
   return std::tuple<std::string, std::vector<test_result>>(test_name, out);
 }

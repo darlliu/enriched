@@ -34,3 +34,5 @@
 # vs project folder
 cliwindows/
 .vs
+
+resources/
