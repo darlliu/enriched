@@ -15,7 +15,7 @@ int main(int argc, char **argv) {
   mydataset.gen_mappings();
   auto enc1 = mydataset.encode_syms({"sym1", "sym3"});
   auto ans1 = mydataset.decode_syms(enc1);
-  auto enc2 = mydataset.encode_annos({"annos1", "anno3"});
+  auto enc2 = mydataset.encode_annos({"anno2", "anno4"});
   auto ans2 = mydataset.decode_annos(enc2);
   return 0;
 }
