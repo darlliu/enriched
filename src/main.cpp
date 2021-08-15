@@ -17,5 +17,8 @@ int main(int argc, char **argv) {
   auto ans1 = mydataset.decode_syms(enc1);
   auto enc2 = mydataset.encode_annos({"anno2", "anno4"});
   auto ans2 = mydataset.decode_annos(enc2);
+  SymSet<symbol16, annotation24> myset1({"sym1", "sym4"}, mydataset);
+  auto res = myset1.get();
+  auto res2 = myset1.get_mapped_mask();
   return 0;
 }
