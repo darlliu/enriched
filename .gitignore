@@ -30,3 +30,7 @@
 *.exe
 *.out
 *.app
+
+# vs project folder
+cliwindows/
+.vs
