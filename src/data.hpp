@@ -53,21 +53,21 @@ public:
   constexpr const unsigned sym_idx(const std::string &sym) {
     return _seen_syms.at(sym);
   };
-  const atype &get_anno(const unsigned &idx) const {
+  constexpr const atype &get_anno(const unsigned &idx) const {
     if (annos.size() > idx) {
       return annos[idx];
     } else {
       throw(new std::invalid_argument("invalid index"));
     }
   };
-  const stype &get_sym(const unsigned &idx) const {
+  constexpr const stype &get_sym(const unsigned &idx) const {
     if (syms.size() > idx) {
       return syms[idx];
     } else {
       throw(new std::invalid_argument("invalid index"));
     }
   };
-  const atype &get_anno(const std::string &anno) const {
+  constexpr const atype &get_anno(const std::string &anno) const {
     if (_seen_annos.count(anno)) {
       return annos[_seen_annos.at(anno)];
     } else {
@@ -75,7 +75,7 @@ public:
           new std::invalid_argument("cannot get invalid annotation: " + anno));
     }
   };
-  const stype &get_sym(const std::string &sym) const {
+  constexpr const stype &get_sym(const std::string &sym) const {
     if (_seen_syms.count(sym)) {
       return syms[_seen_syms.at(sym)];
     } else {
@@ -242,8 +242,8 @@ public:
     idxs.reserve(data.size());
     source = &src;
   };
-  virtual const std::vector<dtype> get() = 0;
-  const decltype(dtype::mappings) get_mapped_mask() {
+  virtual const std::vector<dtype> get() const = 0;
+  const decltype(dtype::mappings) get_mapped_mask() const {
     decltype(dtype::mappings) out = 0;
     for (const auto &dt : get()) {
       out |= dt.mappings;
@@ -264,7 +264,7 @@ public:
     }
   };
 
-  const std::vector<stype> get() {
+  const std::vector<stype> get() const {
     std::vector<stype> out;
     out.reserve(this->idxs.size());
     for (unsigned idx : this->idxs) {
@@ -272,6 +272,13 @@ public:
     }
     return out;
   };
+  const decltype(atype::mappings) get_mask() const {
+    decltype(atype::mappings) out = 0;
+    for (auto &idx : this->idxs) {
+      out.set(idx);
+    }
+    return out;
+  }
 };
 
 template <typename stype, typename atype>
@@ -287,12 +294,20 @@ public:
     }
   };
 
-  const std::vector<atype> get() {
+  const std::vector<atype> get() const{
     std::vector<atype> out;
     for (const auto &idx : this->idxs) {
       out.push_back(this->source->get_anno(idx));
     }
     return out;
   };
+
+  const decltype(stype::mappings) get_mask() const {
+    decltype(stype::mappings) out = 0;
+    for (auto &idx : this->idxs) {
+      out.set(idx);
+    }
+    return out;
+  }
 };
 #endif
