@@ -26,10 +26,10 @@ template <typename dtype, size_t BITSIZE> struct _datum {
   _datum(const dtype &d, const std::vector<unsigned> &m) : data(d), mapped(m){};
   _datum(const dtype &&d, const std::vector<unsigned> &&m)
       : data(std::move(d)), mapped(std::move(m)){};
-  constexpr const mappings get_mask() const {
-    mappings out;
+  constexpr std::unique_ptr<mappings> get_mask() const {
+    auto out = std::make_unique<mappings>();
     for (const unsigned &idx : mapped)
-      out.set(idx);
+      out->set(idx);
     return out;
   };
 };
@@ -57,8 +57,8 @@ private:
   std::unordered_map<std::string, unsigned> _seen_annos, _seen_syms;
 
 public:
-	constexpr const unsigned total_syms() const { return syms.size(); };
-	constexpr const unsigned total_annos() const { return annos.size(); };
+  constexpr const unsigned total_syms() const { return syms.size(); };
+  constexpr const unsigned total_annos() const { return annos.size(); };
   constexpr const unsigned anno_idx(const std::string &anno) {
     return _seen_annos.at(anno);
   };
@@ -225,20 +225,21 @@ public:
     }
     return;
   };
-  typename atype::mappings encode_syms(const std::vector<std::string> &mapped) {
-    typename atype::mappings out = 0;
+  std::unique_ptr<typename atype::mappings>
+  encode_syms(const std::vector<std::string> &mapped) {
+    auto out = std::make_unique<typename atype::mappings>();
     for (const auto &sym : mapped) {
       if (has_sym(sym))
-        out.set(sym_idx(sym));
+        out->set(sym_idx(sym));
     }
     return out;
   };
-  typename stype::mappings
+  std::unique_ptr<typename stype::mappings>
   encode_annos(const std::vector<std::string> &mapped) {
-    typename stype::mappings out = 0;
+    auto out = std::make_unique<typename stype::mappings>();
     for (const auto &anno : mapped) {
       if (has_anno(anno))
-        out.set(anno_idx(anno));
+        out->set(anno_idx(anno));
     }
     return out;
   };
@@ -258,11 +259,11 @@ public:
     source = &src;
   };
   virtual const std::vector<const dtype *> get() const = 0;
-  const typename dtype::mappings get_mapped_mask() const {
-    typename dtype::mappings out = 0;
+  std::unique_ptr<typename dtype::mappings> get_mapped_mask() const {
+    auto out = std::make_unique<typename dtype::mappings>();
     for (const auto &dt : get()) {
       for (const unsigned &idx : dt->mapped) {
-        out.set(idx);
+        out->set(idx);
       }
     }
     return out;
@@ -288,10 +289,10 @@ public:
     }
     return out;
   };
-  const typename atype::mappings get_mask() const {
-    typename atype::mappings out = 0;
+  std::unique_ptr<typename atype::mappings> get_mask() const {
+    auto out = std::make_unique<typename atype::mappings>();
     for (auto &idx : this->idxs) {
-      out.set(idx);
+      out->set(idx);
     }
     return out;
   }
@@ -316,10 +317,10 @@ public:
     }
     return out;
   };
-  const typename stype::mappings get_mask() const {
-    typename stype::mappings out = 0;
+  std::unique_ptr<typename stype::mappings> get_mask() const {
+    auto out = std::make_unique<typename stype::mappings>();
     for (auto &idx : this->idxs) {
-      out.set(idx);
+      out->set(idx);
     }
     return out;
   }

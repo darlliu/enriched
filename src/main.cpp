@@ -7,8 +7,6 @@
 void print_result(std::tuple<std::string, std::vector<test_result>> res) {
   std::cout << "test result : " << std::get<0>(res) << std::endl;
   auto vec = std::get<1>(res);
-  std::sort(vec.begin(), vec.end(),
-            [&](test_result a, test_result b) { return a.stat < b.stat; });
   for (auto &r : vec) {
     std::cout << "name: " << r.name << "\t stat: " << r.stat
               << "\t enriched?: " << r.enriched << std::endl;
@@ -33,9 +31,9 @@ int main(int argc, char **argv) {
                       {"anno2"});
   mydataset.gen_mappings();
   auto enc1 = mydataset.encode_syms({"m1", "m4", "m6"});
-  auto ans1 = mydataset.decode_syms(enc1);
+  auto ans1 = mydataset.decode_syms(*enc1);
   auto enc2 = mydataset.encode_annos({"anno1", "anno2"});
-  auto ans2 = mydataset.decode_annos(enc2);
+  auto ans2 = mydataset.decode_annos(*enc2);
   SymSet<symbol16, annotation16> myset1({"m1", "m2", "m3", "m4", "m5", "m6",
                                          "m7", "m8", "m9", "m10", "m11", "m12"},
                                         mydataset);
@@ -47,19 +45,13 @@ int main(int argc, char **argv) {
   SymSet<symbol16, annotation16> myset2({"f1", "f2", "f3", "f4", "f5", "f6",
                                          "f7", "f8", "f9", "f10", "f11", "f12"},
                                         mydataset);
-  auto test_res =
-      ab_test<SymSet<symbol16, annotation16>, Dataset<symbol16, annotation16>,
-              fisher_t>(myset1, myset2, mydataset);
+  auto test_res = fisher_test(myset1, myset2, mydataset);
   print_result(test_res);
 
-  auto test_res2 =
-      ab_test<SymSet<symbol16, annotation16>, Dataset<symbol16, annotation16>,
-              fisher_t>(myset1, mydataset);
+  auto test_res2 = fisher_test(myset1, mydataset);
   print_result(test_res2);
 
-  auto test_res3 =
-      ab_test<SymSet<symbol16, annotation16>, Dataset<symbol16, annotation16>,
-              fold_change>(myset1, mydataset, "fold");
+  auto test_res3 = fold_change_test(myset1, mydataset);
   print_result(test_res3);
 
   Dataset<symbol18, annotation18> mygo;
@@ -68,13 +60,9 @@ int main(int argc, char **argv) {
   mygo.gen_mappings();
   SymSet<symbol18, annotation18> circaset(
       {"ARNTL", "NR1D1", "SIRT1", "PPARG", "CLOCK"}, mygo);
-  auto test_res4 =
-      ab_test<SymSet<symbol18, annotation18>, Dataset<symbol18, annotation18>,
-              fisher_t>(circaset, mygo);
+  auto test_res4 = fisher_test(circaset, mygo);
   print_result(test_res4);
-  auto test_res5 =
-      ab_test<SymSet<symbol18, annotation18>, Dataset<symbol18, annotation18>,
-              fold_change>(circaset, mygo, "fold");
+  auto test_res5 = fold_change_test(circaset, mygo);
   print_result(test_res5);
   return 0;
 }
