@@ -2,6 +2,19 @@
 #include "io.hpp"
 #include "pch.h"
 #include "stats.hpp"
+#include <algorithm>
+
+void print_result(std::tuple<std::string, std::vector<test_result>> res) {
+  std::cout << "test result : " << std::get<0>(res) << std::endl;
+  auto vec = std::get<1>(res);
+  std::sort(vec.begin(), vec.end(),
+            [&](test_result a, test_result b) { return a.stat < b.stat; });
+  for (auto &r : vec) {
+    std::cout << "name: " << r.name << "\t stat: " << r.stat
+              << "\t enriched?: " << r.enriched << std::endl;
+  }
+  std::cout << "====================" << std::endl;
+}
 
 int main(int argc, char **argv) {
   using namespace enriched;
@@ -37,8 +50,31 @@ int main(int argc, char **argv) {
   auto test_res =
       ab_test<SymSet<symbol16, annotation16>, Dataset<symbol16, annotation16>,
               fisher_t>(myset1, myset2, mydataset);
+  print_result(test_res);
+
+  auto test_res2 =
+      ab_test<SymSet<symbol16, annotation16>, Dataset<symbol16, annotation16>,
+              fisher_t>(myset1, mydataset);
+  print_result(test_res2);
+
+  auto test_res3 =
+      ab_test<SymSet<symbol16, annotation16>, Dataset<symbol16, annotation16>,
+              fold_change>(myset1, mydataset, "fold");
+  print_result(test_res3);
 
   Dataset<symbol18, annotation18> mygo;
   load_annotations_plain(mygo, "D:/code/enriched/data/go.anno.tsv");
+  load_syms_with_mappings(mygo, "D:/code/enriched/data/go.sym.tsv");
+  mygo.gen_mappings();
+  SymSet<symbol18, annotation18> circaset(
+      {"ARNTL", "NR1D1", "SIRT1", "PPARG", "CLOCK"}, mygo);
+  auto test_res4 =
+      ab_test<SymSet<symbol18, annotation18>, Dataset<symbol18, annotation18>,
+              fisher_t>(circaset, mygo);
+  print_result(test_res4);
+  auto test_res5 =
+      ab_test<SymSet<symbol18, annotation18>, Dataset<symbol18, annotation18>,
+              fold_change>(circaset, mygo, "fold");
+  print_result(test_res5);
   return 0;
 }

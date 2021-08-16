@@ -18,15 +18,36 @@ void load_annotations_plain(D &dataset, std::string fname) {
     if (line.size() == 0) {
       continue;
     }
-	auto ss = std::stringstream(line);
+	std::stringstream ss(line);
     std::getline(ss, ids, '\t');
-	std::getline(ss, name, '\t');
+    std::getline(ss, name, '\t');
     std::getline(ss, desc, '\t');
     dataset.add_anno(ids, name, desc);
   }
 }
 
 template <typename D>
-void load_syms_with_mappings(D &dataset, std::string fname) {}
+void load_syms_with_mappings(D &dataset, std::string fname) {
+  std::ifstream ifs(fname);
+  if (!ifs.is_open()) {
+    throw(std::runtime_error("Wrong filename provided:" + fname));
+  }
+  std::string line, sym, tmp, to;
+  std::vector<std::string> mappings;
+  while (std::getline(ifs, line)) {
+	  if (line.size() == 0) {
+		  continue;
+	  }
+	  std::stringstream ss(line);
+	  std::getline(ss, sym, '\t');
+	  std::getline(ss, tmp, '\t');
+	  mappings.clear();
+	  std::stringstream ss2(tmp);
+	  while (std::getline(ss2, to, ',')) {
+		  mappings.push_back(std::move(to));
+	  }
+	  dataset.add_sym(sym, sym, mappings);
+  }
+}
 
 #endif

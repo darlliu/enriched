@@ -57,6 +57,8 @@ private:
   std::unordered_map<std::string, unsigned> _seen_annos, _seen_syms;
 
 public:
+	constexpr const unsigned total_syms() const { return syms.size(); };
+	constexpr const unsigned total_annos() const { return annos.size(); };
   constexpr const unsigned anno_idx(const std::string &anno) {
     return _seen_annos.at(anno);
   };
@@ -130,7 +132,8 @@ public:
     std::vector<unsigned> mappings;
     if (mapped.size() > 0) {
       for (auto anno : mapped) {
-        mappings.push_back(anno_idx(anno));
+        if (has_anno(anno))
+          mappings.push_back(anno_idx(anno));
       }
     }
     _symbol data = {sym, name};
@@ -147,7 +150,8 @@ public:
     std::vector<unsigned> mappings;
     if (mapped.size() > 0) {
       for (auto anno : mapped) {
-        mappings.push_back(anno_idx(anno));
+        if (has_anno(anno))
+          mappings.push_back(anno_idx(anno));
       }
     }
     _symbol data = {std::move(sym), std::move(name)};
@@ -166,7 +170,8 @@ public:
     std::vector<unsigned> mappings;
     if (mapped.size() > 0) {
       for (auto sym : mapped) {
-        mappings.push_back(sym_idx(sym));
+        if (has_sym(sym))
+          mappings.push_back(sym_idx(sym));
       }
     }
     _annotation data = {id, name, desc};
@@ -184,7 +189,8 @@ public:
     std::vector<unsigned> mappings;
     if (mapped.size() > 0) {
       for (auto sym : mapped) {
-        mappings.push_back(sym_idx(sym));
+        if (has_sym(sym))
+          mappings.push_back(sym_idx(sym));
       }
     }
     _annotation data = {std::move(id), std::move(name), std::move(desc)};
