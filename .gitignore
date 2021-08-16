@@ -36,3 +36,4 @@ cliwindows/
 .vs
 
 resources/
+data/snp.sig.tsv

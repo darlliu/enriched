@@ -43,8 +43,8 @@ constexpr double fold_change(const unsigned &_a, const unsigned &_b,
 
 struct test_result {
   std::string name;
-  double stat;
-  bool enriched;
+  double stat = -1000;
+  bool enriched = false;
 };
 
 constexpr bool stat_sig_05(const test_result &res) { return res.stat > 0.05; }

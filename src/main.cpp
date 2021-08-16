@@ -1,8 +1,4 @@
-#include "data.hpp"
-#include "io.hpp"
 #include "pch.h"
-#include "stats.hpp"
-#include <algorithm>
 
 void print_result(std::tuple<std::string, std::vector<test_result>> res) {
   std::cout << "test result : " << std::get<0>(res) << std::endl;
@@ -53,6 +49,17 @@ int main(int argc, char **argv) {
 
   auto test_res3 = fold_change_test(myset1, mydataset);
   print_result(test_res3);
+
+  Dataset<symbol18, annotation18> mysnp;
+  load_annotations_plain(mysnp, "D:/code/enriched/data/snp.anno.tsv");
+  load_syms_with_mappings(mysnp, "D:/code/enriched/data/snp.all.tsv");
+  mysnp.gen_mappings();
+  auto syms = load_syms_from_file("D:/code/enriched/data/snp.sig.tsv");
+  SymSet<symbol18, annotation18> myset(syms, mysnp);
+  auto test_ress1 = fisher_test(myset, mysnp);
+  print_result(test_ress1);
+  auto test_ress2 = fold_change_test(myset, mysnp);
+  print_result(test_ress2);
 
   Dataset<symbol18, annotation18> mygo;
   load_annotations_plain(mygo, "D:/code/enriched/data/go.anno.tsv");
