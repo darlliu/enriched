@@ -21,20 +21,28 @@ struct _symbol {
 
 template <typename dtype, size_t BITSIZE> struct _datum {
   const dtype data;
-  std::bitset<BITSIZE> mappings;
-  _datum(const dtype &d, const std::bitset<BITSIZE> &m)
-      : data(d), mappings(m){};
-  _datum(const dtype &&d, const std::bitset<BITSIZE> &&m)
-      : data(std::move(d)), mappings(std::move(m)){};
+  std::vector<unsigned> mapped;
+  typedef std::bitset<BITSIZE> mappings;
+  _datum(const dtype &d, const std::vector<unsigned> &m) : data(d), mapped(m){};
+  _datum(const dtype &&d, const std::vector<unsigned> &&m)
+      : data(std::move(d)), mapped(std::move(m)){};
+  constexpr const mappings get_mask() const {
+    mappings out;
+    for (const unsigned &idx : mapped)
+      out.set(idx);
+    return out;
+  };
 };
 
 typedef _datum<_annotation, 2 << 8> annotation8;
 typedef _datum<_annotation, 2 << 16> annotation16;
+typedef _datum<_annotation, 2 << 18> annotation18;
 typedef _datum<_annotation, 2 << 20> annotation20;
 typedef _datum<_annotation, 2 << 24> annotation24;
 typedef _datum<_annotation, 2 << 28> annotation28;
 typedef _datum<_symbol, 2 << 8> symbol8;
 typedef _datum<_symbol, 2 << 16> symbol16;
+typedef _datum<_symbol, 2 << 18> symbol18;
 typedef _datum<_symbol, 2 << 20> symbol20;
 typedef _datum<_symbol, 2 << 24> symbol24;
 typedef _datum<_symbol, 2 << 28> symbol28;
@@ -91,7 +99,7 @@ public:
     return _seen_syms.count(sym);
   };
   const std::vector<const atype *>
-  decode_annos(const decltype(stype::mappings) &encoding) {
+  decode_annos(const typename stype::mappings &encoding) {
     std::vector<const atype *> out;
     out.reserve(encoding.size());
     for (unsigned i = 0; i < encoding.size(); ++i) {
@@ -102,7 +110,7 @@ public:
     return out;
   };
   const std::vector<const stype *>
-  decode_syms(const decltype(atype::mappings) &encoding) {
+  decode_syms(const typename atype::mappings &encoding) {
     std::vector<const stype *> out;
     out.reserve(encoding.size());
     for (unsigned i = 0; i < encoding.size(); ++i) {
@@ -119,10 +127,10 @@ public:
     } else {
       _seen_syms[sym] = syms.size();
     }
-    decltype(stype::mappings) mappings = 0;
+    std::vector<unsigned> mappings;
     if (mapped.size() > 0) {
       for (auto anno : mapped) {
-        mappings.set(anno_idx(anno));
+        mappings.push_back(anno_idx(anno));
       }
     }
     _symbol data = {sym, name};
@@ -136,10 +144,10 @@ public:
     } else {
       _seen_syms[sym] = syms.size();
     }
-    decltype(stype::mappings) mappings = 0;
+    std::vector<unsigned> mappings;
     if (mapped.size() > 0) {
       for (auto anno : mapped) {
-        mappings.set(anno_idx(anno));
+        mappings.push_back(anno_idx(anno));
       }
     }
     _symbol data = {std::move(sym), std::move(name)};
@@ -155,10 +163,10 @@ public:
     } else {
       _seen_annos[id] = annos.size();
     }
-    decltype(atype::mappings) mappings = 0;
+    std::vector<unsigned> mappings;
     if (mapped.size() > 0) {
       for (auto sym : mapped) {
-        mappings.set(sym_idx(sym));
+        mappings.push_back(sym_idx(sym));
       }
     }
     _annotation data = {id, name, desc};
@@ -173,10 +181,10 @@ public:
     } else {
       _seen_annos[id] = annos.size();
     }
-    decltype(atype::mappings) mappings = 0;
+    std::vector<unsigned> mappings;
     if (mapped.size() > 0) {
       for (auto sym : mapped) {
-        mappings.set(sym_idx(sym));
+        mappings.push_back(sym_idx(sym));
       }
     }
     _annotation data = {std::move(id), std::move(name), std::move(desc)};
@@ -188,41 +196,40 @@ public:
     if (syms.size() == 0 || annos.size() == 0) {
       return;
     }
-    decltype(stype::mappings) bitmask_sym;
+    unsigned sym_count = 0;
     for (const auto &sym : syms) {
-      bitmask_sym |= sym->mappings;
+      sym_count += sym->mapped.size();
     }
-    decltype(atype::mappings) bitmask_anno;
+    unsigned anno_count = 0;
     for (const auto &anno : annos) {
-      bitmask_anno |= anno->mappings;
+      anno_count += anno->mapped.size();
     }
-    if (bitmask_sym.none()) {
+    if (sym_count == 0) {
       for (const auto &anno : annos) {
-        for (int i = 0; i < syms.size(); ++i) {
-          syms[i]->mappings[anno_idx(anno->data.id)] = anno->mappings[i];
+        for (const unsigned &sidx : anno->mapped) {
+          syms[sidx]->mapped.push_back(anno_idx(anno->data.id));
         }
       }
-    } else if (bitmask_anno.none()) {
+    } else if (anno_count == 0) {
       for (const auto &sym : syms) {
-        for (int i = 0; i < annos.size(); ++i) {
-          annos[i]->mappings[sym_idx(sym->data.sym)] = sym->mappings[i];
+        for (const unsigned &aidx : sym->mapped) {
+          annos[aidx]->mapped.push_back(sym_idx(sym->data.sym));
         }
       }
     }
     return;
   };
-  decltype(atype::mappings)
-  encode_syms(const std::vector<std::string> &mapped) {
-    decltype(atype::mappings) out = 0;
+  typename atype::mappings encode_syms(const std::vector<std::string> &mapped) {
+    typename atype::mappings out = 0;
     for (const auto &sym : mapped) {
       if (has_sym(sym))
         out.set(sym_idx(sym));
     }
     return out;
   };
-  decltype(stype::mappings)
+  typename stype::mappings
   encode_annos(const std::vector<std::string> &mapped) {
-    decltype(stype::mappings) out = 0;
+    typename stype::mappings out = 0;
     for (const auto &anno : mapped) {
       if (has_anno(anno))
         out.set(anno_idx(anno));
@@ -245,10 +252,12 @@ public:
     source = &src;
   };
   virtual const std::vector<const dtype *> get() const = 0;
-  const decltype(dtype::mappings) get_mapped_mask() const {
-    decltype(dtype::mappings) out = 0;
+  const typename dtype::mappings get_mapped_mask() const {
+    typename dtype::mappings out = 0;
     for (const auto &dt : get()) {
-      out |= dt->mappings;
+      for (const unsigned &idx : dt->mapped) {
+        out.set(idx);
+      }
     }
     return out;
   };
@@ -273,8 +282,8 @@ public:
     }
     return out;
   };
-  const decltype(atype::mappings) get_mask() const {
-    decltype(atype::mappings) out = 0;
+  const typename atype::mappings get_mask() const {
+    typename atype::mappings out = 0;
     for (auto &idx : this->idxs) {
       out.set(idx);
     }
@@ -301,8 +310,8 @@ public:
     }
     return out;
   };
-  const decltype(stype::mappings) get_mask() const {
-    decltype(stype::mappings) out = 0;
+  const typename stype::mappings get_mask() const {
+    typename stype::mappings out = 0;
     for (auto &idx : this->idxs) {
       out.set(idx);
     }

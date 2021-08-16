@@ -43,7 +43,7 @@ ab_test(const S &test_set, const S &control_set, const D &dataset,
       continue;
     // 3, build contingency table
     const auto anno = dataset.get_anno(i);
-    auto total_mask = anno -> mappings;
+    auto total_mask = anno->get_mask();
     decltype(total_mask) test_mask = test_set.get_mask(),
                          control_mask = control_set.get_mask();
     unsigned total_test = test_mask.count(),
