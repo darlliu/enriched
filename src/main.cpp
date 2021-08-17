@@ -1,4 +1,5 @@
 #include "pch.h"
+#include <chrono>
 
 void print_result(std::tuple<std::string, std::vector<test_result>> res) {
   std::cout << "test result : " << std::get<0>(res) << std::endl;
@@ -11,6 +12,7 @@ void print_result(std::tuple<std::string, std::vector<test_result>> res) {
 }
 
 int main(int argc, char **argv) {
+  auto start = std::chrono::high_resolution_clock::now();
   using namespace enriched;
   Dataset<symbol16, annotation16> mydataset;
   mydataset.add_anno("anno1", "studying", "good!");
@@ -71,5 +73,11 @@ int main(int argc, char **argv) {
   print_result(test_res4);
   auto test_res5 = fold_change_test(circaset, mygo);
   print_result(test_res5);
+  auto stop = std::chrono::high_resolution_clock::now();
+  std::cout << "run time: "
+            << std::chrono::duration_cast<std::chrono::milliseconds>(stop -
+                                                                     start)
+                   .count()
+            << " ms" << std::endl;
   return 0;
 }
