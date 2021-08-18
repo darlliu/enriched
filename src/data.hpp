@@ -1,12 +1,12 @@
 #ifndef DATA
 #define DATA
 #include <bitset>
-#include <exception>
 #include <memory>
+#include <stdexcept>
 #include <string>
-#include <type_traits>
 #include <unordered_map>
 #include <vector>
+
 
 namespace enriched {};
 using namespace enriched;

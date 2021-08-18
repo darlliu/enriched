@@ -7,7 +7,7 @@
 #include <exception>
 #include <memory>
 #include <string>
-#include <type_traits>
+#include <stdexcept>
 #include <unordered_map>
 #include <vector>
 #endif
