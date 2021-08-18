@@ -7,21 +7,20 @@
 #include <unordered_map>
 #include <vector>
 
-
 namespace enriched {};
 using namespace enriched;
 
 struct _annotation {
-  const std::string id, name, description;
+  const std::string id, name, description; //$1 use of const
 };
 
 struct _symbol {
   const std::string sym, name;
 };
 
-template <typename dtype, size_t BITSIZE> struct _datum {
+template <typename dtype, size_t BITSIZE> struct _datum { //$3 use of template
   const dtype data;
-  std::vector<unsigned> mapped;
+  std::vector<unsigned> mapped; //$4 use of STL
   typedef std::bitset<BITSIZE> mappings;
   _datum(const dtype &d, const std::vector<unsigned> &m) : data(d), mapped(m){};
   _datum(const dtype &&d, const std::vector<unsigned> &&m)
@@ -54,7 +53,7 @@ typedef _datum<_symbol, 2 << 28> symbol28;
 // it provides simple method such as decoding symbols, finding associations etc
 template <typename stype, typename atype> class Dataset {
 private:
-  std::vector<std::unique_ptr<stype>> syms;
+  std::vector<std::unique_ptr<stype>> syms; //$14 unique ptr
   std::vector<std::unique_ptr<atype>> annos;
   std::unordered_map<std::string, unsigned> _seen_annos, _seen_syms;
 
@@ -64,7 +63,8 @@ public:
   constexpr const unsigned anno_idx(const std::string &anno) const {
     return _seen_annos.at(anno);
   };
-  constexpr const unsigned sym_idx(const std::string &sym) const {
+  constexpr const unsigned
+  sym_idx(const std::string &sym) const { //$8 constexpr
     return _seen_syms.at(sym);
   };
   constexpr const atype *get_anno(const unsigned &idx) const {
@@ -133,17 +133,18 @@ public:
     }
     std::vector<unsigned> mappings;
     if (mapped.size() > 0) {
-      for (auto anno : mapped) {
+      for (auto anno : mapped) { //$9 auto $11 range fors
         if (has_anno(anno))
           mappings.push_back(anno_idx(anno));
       }
     }
     _symbol data = {sym, name};
-    syms.push_back(std::make_unique<stype>(data, mappings));
+    syms.push_back(std::make_unique<stype>(data, mappings)); //$18 make_unique
     return;
   };
-  void add_sym(const std::string &&sym, const std::string &&name,
-               const std::vector<std::string> &&mapped = {}) {
+  void add_sym(
+      const std::string &&sym, const std::string &&name,
+      const std::vector<std::string> &&mapped = {}) { //$12 rvalue refs and move
     if (has_sym(sym)) {
       return;
     } else {
@@ -156,7 +157,8 @@ public:
           mappings.push_back(anno_idx(anno));
       }
     }
-    _symbol data = {std::move(sym), std::move(name)};
+    _symbol data = {std::move(sym),
+                    std::move(name)}; //$6 use of list initialization
     syms.push_back(
         std::make_unique<stype>(std::move(data), std::move(mappings)));
     return;

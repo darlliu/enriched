@@ -8,7 +8,7 @@ This is a personal project that provides a software that addresses the following
 
 This project should utilize all these [good stuff](https://raw.githubusercontent.com/CppCon/CppCon2019/master/Presentations/back_to_basics_the_best_parts_of_cpp/back_to_basics_the_best_parts_of_cpp__jason_turner__cppcon_2019.pdf) in modern C++.
 
-1. [const](src/data.hpp#15)
+1. [X] const
 2. Deterministic Object Lifetime and Destruction
 3. Templates
 4. Algorithms and Standard Template Library

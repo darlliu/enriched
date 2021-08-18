@@ -169,7 +169,7 @@ ab_test_full(const S &test_set, const D &dataset,
 }
 
 template <typename S, typename D>
-auto fisher_test(const S &test_set, const D &dataset) {
+auto fisher_test(const S &test_set, const D &dataset) { //$17 return type auto
   return ab_test<S, D, fisher_t, stat_sig_05, ascending>(
       test_set, dataset, "Fisher's Exact Test (P <= 0.05)");
 }
