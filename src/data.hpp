@@ -61,10 +61,10 @@ private:
 public:
   constexpr const unsigned total_syms() const { return syms.size(); };
   constexpr const unsigned total_annos() const { return annos.size(); };
-  constexpr const unsigned anno_idx(const std::string &anno) {
+  constexpr const unsigned anno_idx(const std::string &anno) const {
     return _seen_annos.at(anno);
   };
-  constexpr const unsigned sym_idx(const std::string &sym) {
+  constexpr const unsigned sym_idx(const std::string &sym) const {
     return _seen_syms.at(sym);
   };
   constexpr const atype *get_anno(const unsigned &idx) const {
@@ -96,14 +96,14 @@ public:
       throw(new std::invalid_argument("cannot get invalid symbol: " + sym));
     }
   };
-  constexpr const bool has_anno(const std::string &anno) {
+  constexpr const bool has_anno(const std::string &anno) const {
     return _seen_annos.count(anno);
   };
-  constexpr const bool has_sym(const std::string &sym) {
+  constexpr const bool has_sym(const std::string &sym) const {
     return _seen_syms.count(sym);
   };
   const std::vector<const atype *>
-  decode_annos(const typename stype::mappings &encoding) {
+  decode_annos(const typename stype::mappings &encoding) const {
     std::vector<const atype *> out;
     out.reserve(encoding.size());
     for (unsigned i = 0; i < encoding.size(); ++i) {
@@ -114,7 +114,7 @@ public:
     return out;
   };
   const std::vector<const stype *>
-  decode_syms(const typename atype::mappings &encoding) {
+  decode_syms(const typename atype::mappings &encoding) const {
     std::vector<const stype *> out;
     out.reserve(encoding.size());
     for (unsigned i = 0; i < encoding.size(); ++i) {
@@ -228,7 +228,7 @@ public:
     return;
   };
   std::unique_ptr<typename atype::mappings>
-  encode_syms(const std::vector<std::string> &mapped) {
+  encode_syms(const std::vector<std::string> &mapped) const {
     auto out = std::make_unique<typename atype::mappings>();
     for (const auto &sym : mapped) {
       if (has_sym(sym))
@@ -237,7 +237,7 @@ public:
     return out;
   };
   std::unique_ptr<typename stype::mappings>
-  encode_annos(const std::vector<std::string> &mapped) {
+  encode_annos(const std::vector<std::string> &mapped) const {
     auto out = std::make_unique<typename stype::mappings>();
     for (const auto &anno : mapped) {
       if (has_anno(anno))
@@ -288,7 +288,7 @@ public:
       }
     }
     _get_mask();
-	this->_get_mapped_mask();
+    this->_get_mapped_mask();
   };
   const std::vector<const stype *> get() const {
     std::vector<const stype *> out;
@@ -323,7 +323,7 @@ public:
       }
     }
     _get_mask();
-	this->_get_mapped_mask();
+    this->_get_mapped_mask();
   };
   const std::vector<const atype *> get() const {
     std::vector<const atype *> out;
