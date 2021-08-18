@@ -35,12 +35,14 @@ template <typename dtype, size_t BITSIZE> struct _datum {
 };
 
 typedef _datum<_annotation, 2 << 8> annotation8;
+typedef _datum<_annotation, 2 << 15> annotation15;
 typedef _datum<_annotation, 2 << 16> annotation16;
 typedef _datum<_annotation, 2 << 18> annotation18;
 typedef _datum<_annotation, 2 << 20> annotation20;
 typedef _datum<_annotation, 2 << 24> annotation24;
 typedef _datum<_annotation, 2 << 28> annotation28;
 typedef _datum<_symbol, 2 << 8> symbol8;
+typedef _datum<_symbol, 2 << 15> symbol15;
 typedef _datum<_symbol, 2 << 16> symbol16;
 typedef _datum<_symbol, 2 << 18> symbol18;
 typedef _datum<_symbol, 2 << 20> symbol20;
@@ -252,6 +254,7 @@ template <typename dtype, typename dsettype> class Set {
 protected:
   std::vector<unsigned> idxs;
   dsettype *source;
+  typename dtype::mappings mapped_mask;
 
 public:
   Set(const std::vector<std::string> &data, dsettype &src) {
@@ -260,18 +263,22 @@ public:
   };
   virtual const std::vector<const dtype *> get() const = 0;
   std::unique_ptr<typename dtype::mappings> get_mapped_mask() const {
-    auto out = std::make_unique<typename dtype::mappings>();
+    return std::make_unique<typename dtype::mappings>(mapped_mask);
+  };
+  void _get_mapped_mask() {
     for (const auto &dt : get()) {
       for (const unsigned &idx : dt->mapped) {
-        out->set(idx);
+        mapped_mask.set(idx);
       }
     }
-    return out;
   };
 };
 
 template <typename stype, typename atype>
 class SymSet : public Set<stype, Dataset<stype, atype>> {
+private:
+  typename atype::mappings mask;
+
 public:
   SymSet(const std::vector<std::string> &data, Dataset<stype, atype> &src)
       : Set<stype, Dataset<stype, atype>>(data, src) {
@@ -280,6 +287,8 @@ public:
         this->idxs.push_back(this->source->sym_idx(sym));
       }
     }
+    _get_mask();
+	this->_get_mapped_mask();
   };
   const std::vector<const stype *> get() const {
     std::vector<const stype *> out;
@@ -290,16 +299,20 @@ public:
     return out;
   };
   std::unique_ptr<typename atype::mappings> get_mask() const {
-    auto out = std::make_unique<typename atype::mappings>();
+    return std::make_unique<typename atype::mappings>(mask);
+  };
+  void _get_mask() {
     for (auto &idx : this->idxs) {
-      out->set(idx);
+      mask.set(idx);
     }
-    return out;
-  }
+  };
 };
 
 template <typename stype, typename atype>
 class AnnoSet : public Set<atype, Dataset<stype, atype>> {
+private:
+  typename stype::mappings mask;
+
 public:
   AnnoSet(const std::vector<std::string> &data,
           const Dataset<stype, atype> &src)
@@ -309,6 +322,8 @@ public:
         this->idxs.push_back(this->source->anno_idx(sym));
       }
     }
+    _get_mask();
+	this->_get_mapped_mask();
   };
   const std::vector<const atype *> get() const {
     std::vector<const atype *> out;
@@ -318,11 +333,12 @@ public:
     return out;
   };
   std::unique_ptr<typename stype::mappings> get_mask() const {
-    auto out = std::make_unique<typename stype::mappings>();
+    return std::make_unique<typename stype::mappings>(mask);
+  };
+  void _get_mask() {
     for (auto &idx : this->idxs) {
-      out->set(idx);
+      mask.set(idx);
     }
-    return out;
-  }
+  };
 };
 #endif

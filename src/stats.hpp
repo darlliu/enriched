@@ -107,7 +107,8 @@ ab_test(const S &test_set, const D &dataset, std::string test_name = "fisher") {
   auto test_mask = test_set.get_mask();
   unsigned total_test = test_mask->count(),
            total_control = dataset.total_syms();
-  // 2, for each annotation
+  // 2, for each annotation, generally speaking if the annotation is not
+  // in test set, we are not interested either way
   for (unsigned i = 0; i < hot_mask->size(); ++i) {
     if (!hot_mask->test(i))
       continue;
@@ -143,7 +144,8 @@ ab_test_full(const S &test_set, const D &dataset,
   auto test_mask = test_set.get_mask();
   unsigned total_test = test_mask->count(),
            total_control = dataset.total_syms();
-  // 2, for each annotation
+  // 2, for each annotation in all possible annotations (to find negatively
+  // enriched)
   for (unsigned i = 0; i < dataset.total_annos(); ++i) {
     // 3, build contingency table
     const auto anno = dataset.get_anno(i);

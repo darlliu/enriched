@@ -52,22 +52,22 @@ int main(int argc, char **argv) {
   auto test_res3 = fold_change_test(myset1, mydataset);
   print_result(test_res3);
 
-  Dataset<symbol18, annotation18> mysnp;
+  Dataset<symbol16, annotation16> mysnp;
   load_annotations_plain(mysnp, "D:/code/enriched/data/snp.anno.tsv");
   load_syms_with_mappings(mysnp, "D:/code/enriched/data/snp.all.tsv");
   mysnp.gen_mappings();
   auto syms = load_syms_from_file("D:/code/enriched/data/snp.sig.tsv");
-  SymSet<symbol18, annotation18> myset(syms, mysnp);
+  SymSet<symbol16, annotation16> myset(syms, mysnp);
   auto test_ress1 = fisher_test(myset, mysnp);
   print_result(test_ress1);
   auto test_ress2 = fold_change_test(myset, mysnp);
   print_result(test_ress2);
 
-  Dataset<symbol18, annotation18> mygo;
+  Dataset<symbol16, annotation16> mygo;
   load_annotations_plain(mygo, "D:/code/enriched/data/go.anno.tsv");
   load_syms_with_mappings(mygo, "D:/code/enriched/data/go.sym.tsv");
   mygo.gen_mappings();
-  SymSet<symbol18, annotation18> circaset(
+  SymSet<symbol16, annotation16> circaset(
       {"ARNTL", "NR1D1", "SIRT1", "PPARG", "CLOCK"}, mygo);
   auto test_res4 = fisher_test(circaset, mygo);
   print_result(test_res4);
