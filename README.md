@@ -10,22 +10,22 @@ This project should utilize all these [good stuff](https://raw.githubusercontent
 
 1. [X] const
 2. Deterministic Object Lifetime and Destruction
-3. Templates
-4. Algorithms and Standard Template Library
+3. [X] Templates
+4. [X] Algorithms and Standard Template Library
 5. std::array
-6. List Initialization
+6. [X] List Initialization
 7. Variadic Templates
-8. constexpr
-9. auto
+8. [X] constexpr
+9. [X] auto
 10. Lambdas
-11. range-based  for  loops
-12. rvalue References
+11. [X] range-based  for  loops
+12. [X] rvalue References
 13. Defaulted and Deleted Functions
-14. std::unique_ptr
+14. [X] std::unique_ptr
 15. relaxed  constexpr
 16. generic and variadic lambdas
-17. return type deduction for normal functions
-18. std::make_unique
+17. [X] return type deduction for normal functions
+18. [X] std::make_unique
 19. Structured Bindings
 20. std::string_view
 21. Class Template Argument Deduction
