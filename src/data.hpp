@@ -1,6 +1,7 @@
 #ifndef DATA
 #define DATA
 #include <bitset>
+#include <iostream>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -23,7 +24,7 @@ template <typename dtype, size_t BITSIZE> struct _datum { //$3 use of template
   std::vector<unsigned> mapped; //$4 use of STL
   typedef std::bitset<BITSIZE> mappings;
   _datum(const dtype &d, const std::vector<unsigned> &m) : data(d), mapped(m){};
-  _datum(const dtype &&d, const std::vector<unsigned> &&m)
+  _datum(dtype &&d, std::vector<unsigned> &&m)
       : data(std::move(d)), mapped(std::move(m)){};
   constexpr std::unique_ptr<mappings> get_mask() const {
     auto out = std::make_unique<mappings>();
@@ -142,9 +143,9 @@ public:
     syms.push_back(std::make_unique<stype>(data, mappings)); //$18 make_unique
     return;
   };
-  void add_sym(
-      const std::string &&sym, const std::string &&name,
-      const std::vector<std::string> &&mapped = {}) { //$12 rvalue refs and move
+  void
+  add_sym(std::string &&sym, std::string &&name,
+          std::vector<std::string> &&mapped = {}) { //$12 rvalue refs and move
     if (has_sym(sym)) {
       return;
     } else {
@@ -182,9 +183,8 @@ public:
     annos.push_back(std::make_unique<atype>(data, mappings));
     return;
   };
-  void add_anno(const std::string &&id, const std::string &&name,
-                const std::string &&desc,
-                const std::vector<std::string> &&mapped = {}) {
+  void add_anno(std::string &&id, std::string &&name, std::string &&desc,
+                std::vector<std::string> &&mapped = {}) {
     if (has_anno(id)) {
       return;
     } else {
@@ -343,4 +343,61 @@ public:
     }
   };
 };
+
+struct test_result {
+  std::string name;
+  double stat = -1000;
+  bool enriched = false;
+};
+
+struct idxrange {
+  std::string name;
+  unsigned begin, end;
+};
+
+class ResultDataset {
+private:
+  std::unordered_map<std::string, std::vector<unsigned>> idxs;
+  std::vector<idxrange> tests;
+  std::vector<test_result> data;
+
+public:
+  ResultDataset() {};
+  ResultDataset(const std::string &name, const std::vector<test_result> &res) {
+    add(name, res);
+  };
+  void add(const std::string &name, const std::vector<test_result> &res) {
+    unsigned start = data.size();
+    for (const auto &r : res) {
+      unsigned idx = data.size();
+      if (idxs.count(r.name)) {
+        idxs[r.name].push_back(idx);
+      } else {
+        idxs[r.name] = {idx};
+      }
+      data.push_back(r);
+    }
+    tests.push_back({name, start, (unsigned)data.size()});
+  };
+  void print() {
+    std::cout << " ========== TEST RESULT ==========" << std::endl;
+    for (auto &t : tests) {
+      std::cout << "\t" << t.name;
+    }
+    std::cout << std::endl;
+    for (auto &idx : idxs) {
+      std::cout << idx.first;
+      for (auto &i : idx.second) {
+        std::cout << "\t" << data[i].stat;
+        if (data[i].enriched) {
+          std::cout << "+";
+        } else {
+          std::cout << "-";
+        }
+      }
+      std::cout << std::endl;
+    }
+  };
+};
+
 #endif

@@ -1,8 +1,8 @@
 #ifndef STATS
 #define STATS
+#include "data.hpp"
 #include <algorithm>
 #include <string>
-#include <tuple>
 #include <vector>
 
 constexpr double fisher_t(const unsigned &a, const unsigned &b,
@@ -41,12 +41,6 @@ constexpr double fold_change(const unsigned &_a, const unsigned &_b,
   return r1 / r2;
 }
 
-struct test_result {
-  std::string name;
-  double stat = -1000;
-  bool enriched = false;
-};
-
 constexpr bool stat_sig_05(const test_result &res) { return res.stat > 0.05; }
 constexpr bool stat_sig_01(const test_result &res) { return res.stat > 0.01; }
 constexpr bool stat_sig_005(const test_result &res) { return res.stat > 0.005; }
@@ -61,9 +55,8 @@ constexpr bool descending(const test_result &a, const test_result &b) {
 
 template <typename S, typename D, decltype(fisher_t) fn, decltype(fold_1) gn,
           decltype(ascending) cmp>
-std::tuple<std::string, std::vector<test_result>>
-ab_test(const S &test_set, const S &control_set, const D &dataset,
-        std::string test_name = "fisher") {
+void ab_test(const S &test_set, const S &control_set, const D &dataset,
+             ResultDataset &rout, std::string test_name = "fisher") {
   std::vector<test_result> out;
   // 1, get all hot annotations from test set
   auto hot_mask = test_set.get_mapped_mask();
@@ -94,13 +87,14 @@ ab_test(const S &test_set, const S &control_set, const D &dataset,
   out.erase(std::remove_if(out.begin(), out.end(), gn), out.end());
   std::sort(out.begin(), out.end(), cmp);
   out.resize(std::min(out.size(), (size_t)1000));
-  return std::tuple<std::string, std::vector<test_result>>(test_name, out);
+  rout.add(test_name, out);
+  return;
 }
 
 template <typename S, typename D, decltype(fisher_t) fn, decltype(fold_1) gn,
           decltype(ascending) cmp>
-std::tuple<std::string, std::vector<test_result>>
-ab_test(const S &test_set, const D &dataset, std::string test_name = "fisher") {
+void ab_test(const S &test_set, const D &dataset, ResultDataset &rout,
+             std::string test_name = "fisher") {
   std::vector<test_result> out;
   // 1, get all hot annotations from test set
   auto hot_mask = test_set.get_mapped_mask();
@@ -130,14 +124,14 @@ ab_test(const S &test_set, const D &dataset, std::string test_name = "fisher") {
   out.erase(std::remove_if(out.begin(), out.end(), gn), out.end());
   std::sort(out.begin(), out.end(), cmp);
   out.resize(std::min(out.size(), (size_t)1000));
-  return std::tuple<std::string, std::vector<test_result>>(test_name, out);
+  rout.add(test_name, out);
+  return;
 }
 
 template <typename S, typename D, decltype(fisher_t) fn, decltype(fold_1) gn,
           decltype(ascending) cmp>
-std::tuple<std::string, std::vector<test_result>>
-ab_test_full(const S &test_set, const D &dataset,
-             std::string test_name = "fisher") {
+void ab_test_full(const S &test_set, const D &dataset, ResultDataset &rout,
+                  std::string test_name = "fisher") {
   std::vector<test_result> out;
   // 1, get all hot annotations from test set
   auto hot_mask = test_set.get_mapped_mask();
@@ -165,31 +159,34 @@ ab_test_full(const S &test_set, const D &dataset,
   out.erase(std::remove_if(out.begin(), out.end(), gn), out.end());
   std::sort(out.begin(), out.end(), cmp);
   out.resize(std::min(out.size(), (size_t)1000));
-  return std::tuple<std::string, std::vector<test_result>>(test_name, out);
+  rout.add(test_name, out);
+  return;
 }
 
 template <typename S, typename D>
-auto fisher_test(const S &test_set, const D &dataset) { //$17 return type auto
-  return ab_test<S, D, fisher_t, stat_sig_05, ascending>(
-      test_set, dataset, "Fisher's Exact Test (P <= 0.05)");
+void fisher_test(const S &test_set, const D &dataset,
+                 ResultDataset &res) { //$17 return type auto
+  ab_test<S, D, fisher_t, stat_sig_05, ascending>(
+      test_set, dataset, res, "Fisher's Exact Test (P <= 0.05)");
 }
 
 template <typename S, typename D>
-auto fisher_test(const S &test_set, const S &control_set, const D &dataset) {
-  return ab_test<S, D, fisher_t, stat_sig_05, ascending>(
-      test_set, control_set, dataset, "Fisher's Exact Test (P <= 0.05)");
+void fisher_test_ab(const S &test_set, const S &control_set, const D &dataset,
+                 ResultDataset &res) {
+  ab_test<S, D, fisher_t, stat_sig_05, ascending>(
+      test_set, control_set, dataset, res, "Fisher's Exact Test (P <= 0.05)");
 }
 
 template <typename S, typename D>
-auto fold_change_test(const S &test_set, const D &dataset) {
-  return ab_test<S, D, fold_change, fold_1, descending>(
-      test_set, dataset, "Fold Change (Fold > 1)");
+void fold_change_test(const S &test_set, const D &dataset, ResultDataset &res) {
+  ab_test<S, D, fold_change, fold_1, descending>(test_set, dataset, res,
+                                                 "Fold Change (Fold > 1)");
 }
 
 template <typename S, typename D>
-auto fold_change_test(const S &test_set, const S &control_set,
-                      const D &dataset) {
-  return ab_test<S, D, fold_change, fold_1, descending>(
-      test_set, control_set, dataset, "Fold Change (Fold > 1)");
+void fold_change_test_ab(const S &test_set, const S &control_set, const D &dataset,
+                      ResultDataset &res) {
+  ab_test<S, D, fold_change, fold_1, descending>(test_set, control_set, dataset,
+                                                 res, "Fold Change (Fold > 1)");
 }
 #endif
